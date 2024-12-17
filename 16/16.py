@@ -10,6 +10,7 @@ class Rat():
         self.direction = 0
         self.lastturn = 0
         self.foundEnd = False
+
     def __lt__(self, other):
         return self.points < other.points
 
@@ -19,7 +20,7 @@ class Rat():
     def __repr__(self):
         out = f"points: {self.points}, end = {self.foundEnd}\n"
         for k, v in self.reached.items():
-            out+=f"{k}:{v:.2f}\n"
+            out+=f"{k}:{v[0]}\n"
         return out
 class PSolver():
     def __init__(self):
@@ -27,6 +28,8 @@ class PSolver():
         self.checkpoint = {}
         self.finish_rats = []
         self.minscore = 1e12
+        self.from_here_get_to_end = {}
+        self.second=False
 
     def readinput(self, iname='input16.dat'):
         with open(iname) as f:
@@ -56,7 +59,6 @@ class PSolver():
         next_rats = []
 
         while(isalive):
-            procriate = False
             isalive=False
             create_new_rat = False
             originalrat = copy.deepcopy(rat)
@@ -70,8 +72,6 @@ class PSolver():
                 # print(valid, newi, newj)
                 if not valid:
                     continue
-                if (newi,newj) in originalrat.reached:
-                    continue
 
                 extrapoint = 1 if diff == 0 else 1001
                 currentpoints = originalrat.points + extrapoint
@@ -79,12 +79,26 @@ class PSolver():
                     continue
 
                 directind = int(imagdirec.real) + int(imagdirec.imag)*1j
+                if (newi,newj,directind) in originalrat.reached:
+                    continue
+
                 identifier = (newi,newj, directind)
+
                 if identifier in self.checkpoint:
-                    if currentpoints <= self.checkpoint[identifier]: # no reason to continue
+                    if currentpoints < self.checkpoint[identifier]: # no reason to continue
                         self.checkpoint[identifier] = currentpoints
+                    elif currentpoints == self.checkpoint[identifier]:
+                        if self.second:
+                            if identifier+(currentpoints, ) in self.from_here_get_to_end:
+                                isend=True
+                                currentpoints = self.from_here_get_to_end[identifier+(currentpoints,)]
+                            else:
+                                continue
+                        else:
+                            continue
                     else:
                         continue
+
                 else:
                     self.checkpoint[identifier] = currentpoints
 
@@ -95,13 +109,19 @@ class PSolver():
                     self.finish_rats.append(originalrat)
                     if currentpoints < self.minscore:
                         self.minscore = currentpoints
+                    if self.second:
+                        for (_i, _j, _dir), tmp in originalrat.reached.items():
+                            _pt = tmp
+                            self.from_here_get_to_end[(_i,_j,_dir,_pt)] = currentpoints
+                            # print(self.from_here_get_to_end)
                     continue
                 if create_new_rat:
                     # print("Creating...")
                     newrat = copy.deepcopy(originalrat)
                     newrat.direction = newdirection
                     newrat.points = currentpoints
-                    newrat.reached[(newi,newj)] = newrat.points
+                    newrat.reached[(newi,newj,directind)] = newrat.points
+
                     newrat.lastturn = diff
                     next_rats.append([ newi, newj, newrat ]) 
                 else:
@@ -109,7 +129,7 @@ class PSolver():
                     create_new_rat=True
                     rat.direction = newdirection
                     rat.points = currentpoints
-                    rat.reached[(newi,newj)] = rat.points
+                    rat.reached[(newi,newj,directind)] = rat.points
                     rat.lastturn = diff
                     refi = newi
                     refj = newj
@@ -118,7 +138,7 @@ class PSolver():
                 j = refj
 
         # print("Dead..", len(next_rats), len(self.checkpoint), self.minscore)
-        for i, j, nrat in next_rats:
+        for i, j, nrat in next_rats[::-1]:
             self.searchEnd(i, j, nrat)
 
             
@@ -127,7 +147,7 @@ class PSolver():
         self.readinput()
         rat = Rat()
         i, j = self.start
-        rat.reached[(i,j)] = 0
+        rat.reached[(i,j,0)] = 0
         rat.direction = 0
         rat.lastturn = 0
         self.searchEnd(i, j, rat)
@@ -142,12 +162,27 @@ class PSolver():
         #     print(''.join(line))
 
         print("Solved1:", minrat.points)
+
+
+
+
+        self.second = True
+        self.readinput()
+        rat = Rat()
+        i, j = self.start
+        rat.reached[(i,j,0)] = 0
+        rat.direction = 0
+        rat.lastturn = 0
+        self.checkpoint = {}
+        self.finish_rats = []
+        self.searchEnd(i, j, rat)
         self.bestspots = {}
         for rat in self.finish_rats:
             if rat.points == minrat.points:
                 for i, line in enumerate(self.maze):
                     for j, c in enumerate(line):
-                        if (i,j) in rat.reached:
+                        tmpreached = {(i, j):1 for (i,j,_) in rat.reached.keys()}
+                        if (i,j) in tmpreached.keys():
                             self.bestspots[(i,j)] = 1
         print("Solved2:", len(self.bestspots)+1)
 
