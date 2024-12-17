@@ -6,6 +6,7 @@ import sys
 class Rat():
     def __init__(self):
         self.reached = {}
+        self.reached_dir = {}
         self.points = 0
         self.direction = 0
         self.lastturn = 0
@@ -72,6 +73,8 @@ class PSolver():
                 # print(valid, newi, newj)
                 if not valid:
                     continue
+                if (newi,newj) in originalrat.reached:
+                    continue
 
                 extrapoint = 1 if diff == 0 else 1001
                 currentpoints = originalrat.points + extrapoint
@@ -79,8 +82,6 @@ class PSolver():
                     continue
 
                 directind = int(imagdirec.real) + int(imagdirec.imag)*1j
-                if (newi,newj,directind) in originalrat.reached:
-                    continue
 
                 identifier = (newi,newj, directind)
 
@@ -110,8 +111,9 @@ class PSolver():
                     if currentpoints < self.minscore:
                         self.minscore = currentpoints
                     if self.second:
-                        for (_i, _j, _dir), tmp in originalrat.reached.items():
+                        for (_i, _j), tmp in originalrat.reached.items():
                             _pt = tmp
+                            _dir = originalrat.reached_dir[(_i, _j)]
                             self.from_here_get_to_end[(_i,_j,_dir,_pt)] = currentpoints
                             # print(self.from_here_get_to_end)
                     continue
@@ -120,7 +122,8 @@ class PSolver():
                     newrat = copy.deepcopy(originalrat)
                     newrat.direction = newdirection
                     newrat.points = currentpoints
-                    newrat.reached[(newi,newj,directind)] = newrat.points
+                    newrat.reached[(newi,newj)] = newrat.points
+                    newrat.reached_dir[(newi,newj)] = newdirection
 
                     newrat.lastturn = diff
                     next_rats.append([ newi, newj, newrat ]) 
@@ -129,7 +132,8 @@ class PSolver():
                     create_new_rat=True
                     rat.direction = newdirection
                     rat.points = currentpoints
-                    rat.reached[(newi,newj,directind)] = rat.points
+                    rat.reached[(newi,newj)] = rat.points
+                    rat.reached[(newi,newj)] = newdirection
                     rat.lastturn = diff
                     refi = newi
                     refj = newj
@@ -181,8 +185,7 @@ class PSolver():
             if rat.points == minrat.points:
                 for i, line in enumerate(self.maze):
                     for j, c in enumerate(line):
-                        tmpreached = {(i, j):1 for (i,j,_) in rat.reached.keys()}
-                        if (i,j) in tmpreached.keys():
+                        if (i,j) in rat.reached.keys():
                             self.bestspots[(i,j)] = 1
         print("Solved2:", len(self.bestspots)+1)
 
