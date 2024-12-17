@@ -123,7 +123,7 @@ class PSolver():
                     newrat.direction = newdirection
                     newrat.points = currentpoints
                     newrat.reached[(newi,newj)] = newrat.points
-                    newrat.reached_dir[(newi,newj)] = newdirection
+                    newrat.reached_dir[(newi,newj)] = directind
 
                     newrat.lastturn = diff
                     next_rats.append([ newi, newj, newrat ]) 
@@ -133,7 +133,7 @@ class PSolver():
                     rat.direction = newdirection
                     rat.points = currentpoints
                     rat.reached[(newi,newj)] = rat.points
-                    rat.reached[(newi,newj)] = newdirection
+                    rat.reached_dir[(newi,newj)] = directind
                     rat.lastturn = diff
                     refi = newi
                     refj = newj
@@ -151,7 +151,8 @@ class PSolver():
         self.readinput()
         rat = Rat()
         i, j = self.start
-        rat.reached[(i,j,0)] = 0
+        rat.reached[(i,j)] = 0
+        rat.reached_dir[(i,j)] = 1j
         rat.direction = 0
         rat.lastturn = 0
         self.searchEnd(i, j, rat)
@@ -174,7 +175,8 @@ class PSolver():
         self.readinput()
         rat = Rat()
         i, j = self.start
-        rat.reached[(i,j,0)] = 0
+        rat.reached[(i,j)] = 0
+        rat.reached_dir[(i,j)] = 1j
         rat.direction = 0
         rat.lastturn = 0
         self.checkpoint = {}
