@@ -68,15 +68,18 @@ class PSolver():
 
     def supercheatmode(self):
         nfinishes = 0
+        others_clean = self.secondsatpoint.copy()
         for pos, seconds in self.secondsatpoint.items():
             myi, myj = pos
-            for otherpos, otherseconds in self.secondsatpoint.items():
+            others = others_clean.copy()
+            for otherpos, otherseconds in others.items():
                 i, j = otherpos
                 if abs(i - myi) + abs(j - myj) <= 20:
                     duration_cheat = abs(i - myi) + abs(j - myj)
                     seconds_saved = self.secondsatpoint[(i,j)] - (seconds + duration_cheat)
                     if (seconds_saved>0) and seconds_saved >= 100:
                         nfinishes+=1
+            others_clean.pop((myi,myj))
         print("Solved2:", nfinishes)
 
 
