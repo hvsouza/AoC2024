@@ -71,6 +71,6 @@ class PSolver():
 
 if __name__ == "__main__":
     s = PSolver()
-    # s.solve1()
+    s.solve1()
     s.solve2()
 
